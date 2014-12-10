@@ -1,0 +1,23 @@
+.text {
+    width: 960px;
+    margin: 0 auto;
+}
+
+.left_col {
+   float:left;
+   width:470px;
+}
+.right_col {
+   float:right;
+   width:470px;
+}
+
+.clear {
+ clear:both;
+}
+
+.foot{width:100%;}
+.foot .left{float:left;}
+.foot .right{float:right;width:95px}
+.foot .center{margin:0 auto;width:110px;}
+
