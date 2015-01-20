@@ -1,23 +1,78 @@
-.text {
-    width: 960px;
-    margin: 0 auto;
+svg {
+    overflow: visible;
 }
 
-.left_col {
-   float:left;
-   width:470px;
+.bar rect {
+  fill: steelblue;
+  shape-rendering: crispEdges;
 }
+
+.bar text {
+  fill: #fff;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.parameters {
+    cursor: pointer;
+    background: #ddf;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 10px;
+}
+
+#container {
+    position: relative;
+    width: 480px;
+    height: 480px;
+    margin: 0 auto;
+    top: 10px;
+    z-index: 10;
+    /*border-radius: 10px;
+    border: 2px solid #ccc;*/
+}
+
+canvas {
+        background-color: white;
+        width: 480px;
+        height: 480px;
+        border-radius: 10px;
+      }
+
+#text {
+    width: 960px;
+    margin: 0 auto;
+    margin-bottom: 0px;
+}
+
+
+.canvas-text {
+    position: absolute;
+    color:white;
+    text-align:left;
+    font-size:14pt;
+}
+
+
+.left_col {
+    float: left;
+    width: 450px;
+}
+
 .right_col {
-   float:right;
-   width:470px;
+    float: right;
+    width: 450px;
 }
 
 .clear {
- clear:both;
+    clear: both;
 }
 
-.foot{width:100%;}
-.foot .left{float:left;}
-.foot .right{float:right;width:95px}
-.foot .center{margin:0 auto;width:110px;}
+
+.foot .puzlet-link { float:left }
+.foot .org-link { float:right }
 
