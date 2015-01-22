@@ -23,38 +23,13 @@ class Histo extends d3Object
     constructor: (@N=20, @lo=0, @hi=100) ->
         super "histo"
         chartArea = @obj
-
-        @dx = (@hi-@lo)/@N
-        @x = (@dx*n for n in [0...@N])
-        console.log "???", @x
-
-
-        @count = (i for i in  [0...@N])
-        @data = ({count:i, x:i*@dx} for i in  [0...@N])
-
-        console.log "data", @data
-        console.log "count", @count
-
-
-        @values = d3.range(100).map(d3.random.bates(10))
-
-        @xScale = d3.scale.linear()
-            .domain([0, 1])
-            .range([0, width])
-
-        #@data = d3.layout.histogram().frequency(false)
-        #    .bins(@xScale.ticks(20)) @values
-
-        ##console.log "data", @data
-
-        @yScale = d3.scale.linear()
-            .domain([0, 1])
-            .range([0, height]);
-
         chartArea.attr("width", width + margin.left + margin.right)
         chartArea.attr("height", height + margin.top + margin.bottom)
         chartArea.attr("class","chart")
         chartArea.attr("id", "chartArea")
+
+        @del = (@hi-@lo)/@N
+        @data = ({count:1, val:i*@del} for i in  [0...@N])
 
         @plotArea = chartArea.append("g")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
@@ -62,37 +37,23 @@ class Histo extends d3Object
             .attr("width", width)
             .attr("height", height)
 
+        @bar = {domainDir:"y", domainAttr:"height", rangeDir:"x", rangeAttr:"width"}
+        #@bar = {domainDir:"x", domainAttr:"width", rangeDir:"y", rangeAttr:"height"}        
+
         @plotArea.selectAll("rect")
            .data(@data)
            .enter()
            .append("rect")
-           #.attr("x", (d) -> d.x*width)
-           #console.log "x", @x
-           #.attr("x", (d,i) => i*@dx )
-           .attr("x", (d) -> d.x )
-           #.attr("y", (d) -> height*(1-d.y))
-           .attr("y", (d,i) => (1-@count[i]/Math.max(@count...))*height)
-           #.attr("width", (d) -> d.dx*width)
-           #.attr("width", (d,i) => @x[i])
-           .attr("width", @dx)
-           #.attr("height", (d) -> d.y*height)
-           .attr("height", (d, i) => @count[i]/Math.max(@count...)*height)
+           .attr(@bar.domainDir, (d) -> d.val )
+           .attr(@bar.domainAttr, @del)
 
-        @values2 = d3.range(100).map(d3.random.bates(10))
-        @data2 = d3.layout.histogram().frequency(false)
-            .bins(@xScale.ticks(20)) @values2
-
-    update2: (val) ->
-        index=Math.floor(val/(@hi-@lo))
-        @count[index] += 1
-        
-    update: (values) ->
-        data = d3.layout.histogram().frequency(false)
-            .bins(@xScale.ticks(20)) values
+    update: (c) ->
+        @data[i].count = c[i] for i in [0...@N]
+        cmax = d3.max(c)
         @plotArea.selectAll("rect")
-            .data(data)
-            .attr("y", (d) -> height*(1-d.y))
-            .attr("height", (d) -> d.y*height)
+            .data(@data)
+            .attr(@bar.rangeDir, (d,i) => (1-d.count/cmax)*width)
+            .attr(@bar.rangeAttr, (d, i) => d.count/cmax*width)
 
         
 class Canvas
@@ -260,11 +221,13 @@ class Simulation
         @timer = null
 
 
+###
 count = (0 for [0..19])
 sim = new Simulation
 $("#params4b").on "click", =>
     sim.stop()
 setTimeout (-> sim.start()), 2000
+###
 
-
-new Histo
+h = new Histo
+h.update((20-i for i in  [0...20]))
