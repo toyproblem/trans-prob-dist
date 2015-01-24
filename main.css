@@ -32,15 +32,34 @@ svg {
     margin: 0 auto;
     top: 10px;
     z-index: 10;
-    /*border-radius: 10px;
-    border: 2px solid #ccc;*/
+    border: 2px solid #c00;
+}
+
+#plot {
+    position: absolute;
+    /*width: 480px;
+    height: 480px;*/
+    margin: 0 auto;
+    top: 0;
+    border: 2px solid #00f;
+}
+
+#canvas {
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    margin: 0 auto;
+    top: 60px;
+    left: 60px;
+    border: 2px solid #0f0;
 }
 
 canvas {
         background-color: white;
-        width: 480px;
-        height: 480px;
+        width: 360px;
+        height: 360px;
         border-radius: 10px;
+	border: 2px solid #ccc;
       }
 
 #text {

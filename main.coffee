@@ -8,12 +8,76 @@ class d3Object
         @element = d3.select "##{id}"
         @element.selectAll("svg").remove()
         @obj = @element.append "svg"
-        #@initAxes()
+        @initAxes()
         
     append: (obj) -> @obj.append obj
     
     initAxes: ->
 
+class Plot extends d3Object
+
+    margin = {top: 60, right: 60, bottom: 60, left: 60}
+    width = 480 - margin.left - margin.right
+    height = 480 - margin.top - margin.bottom
+    
+    constructor: () ->
+
+        x = [-0.5, -0.3, -0.1, 0.1, 0.3, 0.5]
+        y = [0.5, -0.25, 0.5, 0.25, -0.5, 0.5]
+        
+        super "plot"
+        chartArea = @obj
+        chartArea.attr("width", width + margin.left + margin.right)
+        chartArea.attr("height", height + margin.top + margin.bottom)
+        chartArea.attr("class","chart")
+        chartArea.attr("id", "chartArea")
+
+        @obj.append("g") # x axis
+            .attr("class", "axis")
+            .attr("transform", "translate(#{margin.left}, #{margin.top+height+10})")
+            .call(@xAxis) 
+
+        @obj.append("g") # y axis
+            .attr("class", "axis")
+            .attr("transform","translate(#{margin.left-10}, #{margin.top})")
+            .call(@yAxis) 
+
+        @plot = @obj.append("g") # Plot area
+            .attr("id", "plot")
+            .attr("transform", "translate(#{margin.left},#{margin.top})")
+
+        @draw(x,y)
+
+    draw: (X, Y)->
+        lineData = ({ x: x, y:Y[i] } for x,i in X)
+        @plot.append("path")
+            .attr("d", @lineFunction(lineData))
+            .attr("stroke", "blue")
+            .attr("stroke-width", 2)
+            .attr("fill", "none");
+         
+    initAxes: ->
+        @xScale = d3.scale.linear() # sim units -> screen units
+            .domain([-1, 1])
+            .range([0, width])
+
+        @yScale = d3.scale.linear() # sim units -> screen units
+            .domain([-1, 1])
+            .range([height, 0])
+
+        @xAxis = d3.svg.axis()
+            .scale(@xScale)
+            .orient("bottom")
+
+        @yAxis = d3.svg.axis()
+            .scale(@yScale)
+            .orient("left")
+
+        @lineFunction = d3.svg.line()
+            .x( (d) => @xScale d.x )
+            .y( (d) => @yScale d.y )
+            .interpolate("linear");
+        
 class Histo extends d3Object
 
     margin = {top: 10, right: 30, bottom: 30, left: 30}
@@ -58,8 +122,8 @@ class Histo extends d3Object
         
 class Canvas
 
-    @width = 480
-    @height = 480
+    @width = 360
+    @height = 360
     
     @canvas = document.querySelector('canvas')
     @canvas.width = @width
@@ -220,7 +284,6 @@ class Simulation
         clearInterval @timer
         @timer = null
 
-
 ###
 count = (0 for [0..19])
 sim = new Simulation
@@ -229,5 +292,7 @@ $("#params4b").on "click", =>
 setTimeout (-> sim.start()), 2000
 ###
 
-h = new Histo
-h.update((20-i for i in  [0...20]))
+#h = new Histo
+#h.update((20-i for i in  [0...20]))
+
+new Plot
