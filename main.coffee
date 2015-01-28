@@ -159,7 +159,7 @@ class Vector
 #==== Particles ====
 
 
-class Sunlight # extends Photon
+class Sunlight
     
     colors: ["#ff0", "#00f"]
     sizes: [2, 3]
@@ -175,15 +175,14 @@ class Sunlight # extends Photon
         @d = 0
         @setState 0
 
-
     init: ->
-        @yscale = d3.scale.linear()
-            .domain([@h/2-100, @h/2+100])
-            .range([-1, 1])
+        @xScale = d3.scale.linear() # sim units -> screen units
+            .domain([-1, 1])
+            .range([0, @w])
 
-        @xscale = d3.scale.linear()
-            .domain([-pi/2, pi/2])
-            .range([@w/2-100, @w/2+100])
+        @yScale = d3.scale.linear() # sim units -> screen units
+            .domain([-1, 1])
+            .range([@h, 0])
 
     setState: (@state) ->
         return if @state<0
@@ -209,20 +208,17 @@ class Sunlight # extends Photon
 
     setVelocities: ->
 
-        rad = 100
-        cy = @h/2  # Canvas center
         @velocity[0] = new Vector @vel0.x, @vel0.y
-        theta = Math.asin((@pos.y - cy)/rad) 
-        #@velocity[1] = (new Vector).polar(@vel0.mag(), pi-2*theta)
         @velocity[1] = (new Vector).polar(10, pi/2)        
 
-        #@limit = @w/2 - Math.sqrt(rad*rad-(@pos.y-cy)*(@pos.y-cy))
-        #console.log "??", Math.asin(@yscale(@pos.y))
-        @limit =  @xscale(Math.asin(@yscale(@pos.y)))
-        @bin = Math.floor((pi/2+Math.asin(@yscale(@pos.y)))/(pi)*20)
-        #console.log "bin", @bin
+        g = (u) -> ((u<0)*1.5 + (u>0)/2)*u + 0.375 
+        h = (u) -> Math.floor(20*(u+0.5))
+
+        @limit =  @yScale(g(@xScale.invert(@pos.x)))
+        #console.log "???", h(@xScale.invert(@pos.x))
+        @bin = Math.floor((@yScale.invert(@limit)+0.875)/2*20)
  
-    collision: -> @pos.x > @limit
+    collision: -> @pos.y > @limit
 
 
 
@@ -232,9 +228,9 @@ class Emitter
 
     maxPhotons: 4000
     rate: 0
-    checked: true
     
     cy: Canvas.height/2  # Canvas center
+    cx: Canvas.width/2  # Canvas center
     
     constructor: ->
         @photons = []
@@ -242,23 +238,26 @@ class Emitter
     emit: () ->
         unless @photons.length > @maxPhotons
             # emitPhoton defined in subclass
+            # console.log "photons", @photons
             @photons.push(@emitPhoton()) for [0...@rate]
         @photons = @photons.filter (photon) => photon.visible()
         for photon in @photons
             photon.move()
-            if @checked then photon.draw()
+            photon.draw()
 
 class Sun extends Emitter
 
     x: 1
-    l: 200
+    l: 180
     
     constructor: ->
-        @velocity = new Vector 2, 0
+        #@velocity = new Vector 2, 0
+        @velocity = new Vector  0, 2
         super()
 
     emitPhoton: ->
-        pos = new Vector @x, @cy + @l*(Math.random()-0.5) 
+        #pos = new Vector @x, @cy + @l*(Math.random()-0.5)
+        pos = new Vector @cx + @l*(Math.random()-0.5), 1
         new Sunlight(pos, @velocity)
 
 
@@ -269,13 +268,15 @@ class Simulation
     constructor: ->
         @sun = new Sun
         @sun.rate = 10
-
+        @h = new Histo
+        
     start: () ->
         setTimeout (=> @animate 20000), 200
         
     snapshot: () ->
         Canvas.clear()
         @sun.emit()
+        @h.update(count)
 
     animate: () ->
         @timer = setInterval (=> @snapshot()), 50
@@ -284,15 +285,11 @@ class Simulation
         clearInterval @timer
         @timer = null
 
-###
+
 count = (0 for [0..19])
 sim = new Simulation
 $("#params4b").on "click", =>
     sim.stop()
 setTimeout (-> sim.start()), 2000
-###
-
-#h = new Histo
-#h.update((20-i for i in  [0...20]))
 
 new Plot
