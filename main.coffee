@@ -102,7 +102,6 @@ class Histo extends d3Object
             .attr("height", height)
 
         @bar = {domainDir:"y", domainAttr:"height", rangeDir:"x", rangeAttr:"width"}
-        #@bar = {domainDir:"x", domainAttr:"width", rangeDir:"y", rangeAttr:"height"}        
 
         @plotArea.selectAll("rect")
            .data(@data)
@@ -119,7 +118,6 @@ class Histo extends d3Object
             .attr(@bar.rangeDir, (d,i) => (1-d.count/cmax)*width)
             .attr(@bar.rangeAttr, (d, i) => d.count/cmax*width)
 
-        
 class Canvas
 
     @width = 360
@@ -156,34 +154,33 @@ class Vector
         @y = m*Math.sin(a)
         this
 
-#==== Particles ====
-
 
 class Sunlight
     
-    colors: ["#ff0", "#00f"]
-    sizes: [2, 3]
+    colors: ["#ff0", "#ff0"]
+    sizes: [2, 5]
     w: Canvas.width
     h: Canvas.height
     O: -> new Vector 0, 0
 
-    constructor: (@pos=@O(), @vel0=@O()) ->
-        @init()
-        @limit = 0
-        @velocity = []  # Set of velocities indexed by state
-        @setVelocities()  # Configured in subclass
-        @d = 0
-        @setState 0
+    constructor: (@pos=@O(), g, q) ->
 
-    init: ->
-        @xScale = d3.scale.linear() # sim units -> screen units
+        # sim units -> screen units
+        @xScale = d3.scale.linear()
             .domain([-1, 1])
             .range([0, @w])
-
-        @yScale = d3.scale.linear() # sim units -> screen units
+        @yScale = d3.scale.linear()
             .domain([-1, 1])
             .range([@h, 0])
 
+        # dynamics
+        @d = 0
+        @velocity = []
+        @velocity[0] = new Vector 0, 2
+        @velocity[1] = @O()
+        @setCollision(g, q)
+        @setState 0
+        
     setState: (@state) ->
         return if @state<0
         @vel = @velocity[@state]
@@ -200,74 +197,44 @@ class Sunlight
         if @collision() and @state is 0
             @setState(1)
             count[@bin] += 1
-            console.log "count", count
-        
         @d += @vel.mag()
         @pos.add @vel
 
-
-    setVelocities: ->
-
-        @velocity[0] = new Vector @vel0.x, @vel0.y
-        @velocity[1] = (new Vector).polar(10, pi/2)        
-
-        g = (u) -> ((u<0)*1.5 + (u>0)/2)*u + 0.375 
-        h = (u) -> Math.floor(20*(u+0.5))
-
+    setCollision: (g, quant) ->
         @limit =  @yScale(g(@xScale.invert(@pos.x)))
-        #console.log "???", h(@xScale.invert(@pos.x))
-        @bin = Math.floor((@yScale.invert(@limit)+0.875)/2*20)
+        @bin = quant(@yScale.invert(@limit))
  
     collision: -> @pos.y > @limit
 
 
+class Sun
 
-#==== Emitters ====
-
-class Emitter
-
+    l: 180
     maxPhotons: 4000
-    rate: 0
+    rate: 10
+    cx: Canvas.width/2
     
-    cy: Canvas.height/2  # Canvas center
-    cx: Canvas.width/2  # Canvas center
-    
-    constructor: ->
+    constructor: (@g, @q)->
         @photons = []
 
     emit: () ->
         unless @photons.length > @maxPhotons
-            # emitPhoton defined in subclass
-            # console.log "photons", @photons
             @photons.push(@emitPhoton()) for [0...@rate]
         @photons = @photons.filter (photon) => photon.visible()
         for photon in @photons
             photon.move()
             photon.draw()
 
-class Sun extends Emitter
-
-    x: 1
-    l: 180
-    
-    constructor: ->
-        #@velocity = new Vector 2, 0
-        @velocity = new Vector  0, 2
-        super()
-
     emitPhoton: ->
-        #pos = new Vector @x, @cy + @l*(Math.random()-0.5)
         pos = new Vector @cx + @l*(Math.random()-0.5), 1
-        new Sunlight(pos, @velocity)
+        new Sunlight(pos, @g, @q)
 
-
-#==== Simulation ====
- 
 class Simulation
 
     constructor: ->
-        @sun = new Sun
-        @sun.rate = 10
+        g = (u) -> ((u<0)*1.5 + (u>0)/2)*u + 0.375
+        q = (y) -> Math.floor((y+0.875)/2*20) 
+        @sun = new Sun g, q
         @h = new Histo
         
     start: () ->
