@@ -35,6 +35,17 @@ svg {
     border: 2px solid #c00;
 }
 
+#histo {
+    position: absolute;
+    left: 0;
+    top: 120px;
+    /*width: 480px;
+    height: 480px;*/
+    margin: 0 auto;
+    border: 2px solid #999;
+}
+
+
 #plot {
     position: absolute;
     /*width: 480px;

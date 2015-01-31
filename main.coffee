@@ -20,11 +20,8 @@ class Plot extends d3Object
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
-    constructor: () ->
+    constructor: (@x, @y) ->
 
-        x = [-0.5, -0.3, -0.1, 0.1, 0.3, 0.5]
-        y = [0.5, -0.25, 0.5, 0.25, -0.5, 0.5]
-        
         super "plot"
         chartArea = @obj
         chartArea.attr("width", width + margin.left + margin.right)
@@ -34,19 +31,19 @@ class Plot extends d3Object
 
         @obj.append("g") # x axis
             .attr("class", "axis")
-            .attr("transform", "translate(#{margin.left}, #{margin.top+height+10})")
+                .attr("transform", "translate(#{margin.left}, #{margin.top-10})")
             .call(@xAxis) 
 
         @obj.append("g") # y axis
             .attr("class", "axis")
-            .attr("transform","translate(#{margin.left-10}, #{margin.top})")
+            .attr("transform","translate(#{margin.left+width+10}, #{margin.top})")
             .call(@yAxis) 
 
         @plot = @obj.append("g") # Plot area
             .attr("id", "plot")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
-        @draw(x,y)
+        @draw(@x, @y)
 
     draw: (X, Y)->
         lineData = ({ x: x, y:Y[i] } for x,i in X)
@@ -67,11 +64,11 @@ class Plot extends d3Object
 
         @xAxis = d3.svg.axis()
             .scale(@xScale)
-            .orient("bottom")
+            .orient("top")
 
         @yAxis = d3.svg.axis()
             .scale(@yScale)
-            .orient("left")
+            .orient("right")
 
         @lineFunction = d3.svg.line()
             .x( (d) => @xScale d.x )
@@ -84,7 +81,7 @@ class Histo extends d3Object
     width = 240 - margin.left - margin.right
     height = 240 - margin.top - margin.bottom
 
-    constructor: (@N=20, @lo=0, @hi=100) ->
+    constructor: (@N=20, @lo=0, @hi=360) ->
         super "histo"
         chartArea = @obj
         chartArea.attr("width", width + margin.left + margin.right)
@@ -107,7 +104,7 @@ class Histo extends d3Object
            .data(@data)
            .enter()
            .append("rect")
-           .attr(@bar.domainDir, (d) -> d.val )
+           .attr(@bar.domainDir, (d) -> height-d.val )
            .attr(@bar.domainAttr, @del)
 
     update: (c) ->
@@ -157,8 +154,8 @@ class Vector
 
 class Sunlight
     
-    colors: ["#ff0", "#ff0"]
-    sizes: [2, 5]
+    colors: ["#ff0", "#000"]
+    sizes: [2, 6]
     w: Canvas.width
     h: Canvas.height
     O: -> new Vector 0, 0
@@ -232,10 +229,14 @@ class Sun
 class Simulation
 
     constructor: ->
-        g = (u) -> ((u<0)*1.5 + (u>0)/2)*u + 0.375
+        g = (u) -> ((u<0)*1.5 + (u>0)/2)*u + 0.275
         q = (y) -> Math.floor((y+0.875)/2*20) 
         @sun = new Sun g, q
         @h = new Histo
+        x = [-0.5, 0, 0.5]
+        #y = [0.5, -0.25, 0.5, 0.25, -0.5, 0.5]
+        #console.log "y", [g(u) for u in x]
+        new Plot x, (g(u) for u in x)
         
     start: () ->
         setTimeout (=> @animate 20000), 200
@@ -259,4 +260,3 @@ $("#params4b").on "click", =>
     sim.stop()
 setTimeout (-> sim.start()), 2000
 
-new Plot
