@@ -44,6 +44,7 @@ class Plot extends d3Object
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
         @draw(@x, @y)
+        @circ(200,100)
 
     draw: (X, Y)->
         lineData = ({ x: x, y:Y[i] } for x,i in X)
@@ -52,7 +53,21 @@ class Plot extends d3Object
             .attr("stroke", "blue")
             .attr("stroke-width", 2)
             .attr("fill", "none");
-         
+
+    circ: (X, Y)->
+        @plot.selectAll('circle')
+            .data([{x:X, y:Y, r:100}])
+            .enter()
+            .append('circle')
+            .attr('cx', (d) -> d.x)
+            .attr('cy', (d) -> d.y)
+            .attr('r', (d) -> d.r)
+            .transition()
+            .delay(500)
+            .attr('r', 50)
+            .remove()
+            
+        
     initAxes: ->
         @xScale = d3.scale.linear() # sim units -> screen units
             .domain([-1, 1])
