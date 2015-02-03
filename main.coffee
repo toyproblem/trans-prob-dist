@@ -44,7 +44,8 @@ class Plot extends d3Object
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
         @draw(@x, @y)
-        @circ(200,100)
+        #@circ([200,100])
+        #@circ([100,200])
 
     draw: (X, Y)->
         lineData = ({ x: x, y:Y[i] } for x,i in X)
@@ -54,7 +55,7 @@ class Plot extends d3Object
             .attr("stroke-width", 2)
             .attr("fill", "none");
 
-    circ: (X, Y)->
+    circx: (X, Y)->
         @plot.selectAll('circle')
             .data([{x:X, y:Y, r:100}])
             .enter()
@@ -65,7 +66,22 @@ class Plot extends d3Object
             .transition()
             .delay(500)
             .attr('r', 50)
+            #    .remove()
+
+    circ: (m)->
+        @plot.insert('circle')
+            .attr('cx', m[0])
+            .attr('cy', m[1])
+            .attr('r', 1e-6)
+            .style('stroke', d3.hsl(i = (i + 1) % 360, 1, .5))
+            .style('stroke-opacity', 1)
+            .transition()
+            .duration(2000)
+            .ease(Math.sqrt)
+            .attr('r', 100)
+            .style('stroke-opacity', 1e-6)
             .remove()
+
             
         
     initAxes: ->
@@ -192,6 +208,8 @@ class Sunlight
         @velocity[1] = @O()
         @setCollision(g, q)
         @setState 0
+
+        #@colPos = []
         
     setState: (@state) ->
         return if @state<0
@@ -209,6 +227,8 @@ class Sunlight
         if @collision() and @state is 0
             @setState(1)
             count[@bin] += 1
+            colPos.push(@pos)
+            #console.log "colPos", colPos
         @d += @vel.mag()
         @pos.add @vel
 
@@ -223,7 +243,7 @@ class Sun
 
     l: 180
     maxPhotons: 4000
-    rate: 10
+    rate: 2
     cx: Canvas.width/2
     
     constructor: (@g, @q)->
@@ -251,7 +271,8 @@ class Simulation
         x = [-0.5, 0, 0.5]
         #y = [0.5, -0.25, 0.5, 0.25, -0.5, 0.5]
         #console.log "y", [g(u) for u in x]
-        new Plot x, (g(u) for u in x)
+        @p = new Plot x, (g(u) for u in x)
+        #setTimeout @p.circ([100, 100]),
         
     start: () ->
         setTimeout (=> @animate 20000), 200
@@ -260,16 +281,25 @@ class Simulation
         Canvas.clear()
         @sun.emit()
         @h.update(count)
+        console.log("???", [c.x, c.y]) for c in colPos
+        #colPos = []
+        #console.log "???", colPos[0]
+        @p.circ([colPos[0].x,colPos[0].y])
+        #@p.circ([c.x,c.y]) for c in colPos
+        #colPos = []
+        colPos.pop() for c in colPos
+
 
     animate: () ->
         @timer = setInterval (=> @snapshot()), 50
-        
+
     stop: ->
         clearInterval @timer
         @timer = null
 
 
 count = (0 for [0..19])
+colPos = []
 sim = new Simulation
 $("#params4b").on "click", =>
     sim.stop()

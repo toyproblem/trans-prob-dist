@@ -25,6 +25,12 @@ svg {
     border-radius: 10px;
 }
 
+circle {
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+
 #container {
     position: relative;
     width: 480px;
