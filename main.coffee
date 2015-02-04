@@ -55,19 +55,6 @@ class Plot extends d3Object
             .attr("stroke-width", 2)
             .attr("fill", "none");
 
-    circx: (X, Y)->
-        @plot.selectAll('circle')
-            .data([{x:X, y:Y, r:100}])
-            .enter()
-            .append('circle')
-            .attr('cx', (d) -> d.x)
-            .attr('cy', (d) -> d.y)
-            .attr('r', (d) -> d.r)
-            .transition()
-            .delay(500)
-            .attr('r', 50)
-            #    .remove()
-
     circ: (m)->
         @plot.insert('circle')
             .attr('cx', m[0])
@@ -82,7 +69,36 @@ class Plot extends d3Object
             .style('stroke-opacity', 1e-6)
             .remove()
 
-            
+    hline: (m)->
+        @plot.insert('line')
+            .attr('x1', m[0])
+            .attr('y1', m[1])
+            .attr('x2', width)
+            .attr('y2', m[1])
+            .style('stroke', d3.hsl(i = (i + 1) % 360, 1, .5))
+            .style('stroke-opacity', 1)
+            .transition()
+            .duration(2000)
+            .ease(Math.sqrt)
+            .attr('x1', width)
+            .style('stroke-opacity', 1e-6)
+            .remove()
+
+    vline: (m)->
+        @plot.insert('line')
+            .attr('x1', m[0])
+            .attr('y1', m[1])
+            .attr('x2', m[0])
+            .attr('y2', height)
+            .style('stroke', d3.hsl(i = (i + 1) % 360, 1, .5))
+            .style('stroke-opacity', 1)
+            .transition()
+            .duration(2000)
+            .ease(Math.sqrt)
+            .attr('y1', height)
+            .style('stroke-opacity', 1e-6)
+            .remove()
+
         
     initAxes: ->
         @xScale = d3.scale.linear() # sim units -> screen units
@@ -281,10 +297,11 @@ class Simulation
         Canvas.clear()
         @sun.emit()
         @h.update(count)
-        console.log("???", [c.x, c.y]) for c in colPos
+        #console.log("???", [c.x, c.y]) for c in colPos
         #colPos = []
         #console.log "???", colPos[0]
-        @p.circ([colPos[0].x,colPos[0].y])
+        @p.hline([colPos[0].x,colPos[0].y])
+        @p.vline([colPos[0].x,colPos[0].y])
         #@p.circ([c.x,c.y]) for c in colPos
         #colPos = []
         colPos.pop() for c in colPos
