@@ -47,6 +47,31 @@ class Plot extends d3Object
         #@circ([200,100])
         #@circ([100,200])
 
+        @marker0 = @marker('black')
+
+    marker: (color) ->
+        m = @plot.append("circle")
+            .attr("r",10)
+            .style("fill", color)
+            .style("stroke", color)
+            .style("stroke-width","1")
+            .call(
+                d3.behavior
+                .drag()
+                .origin(=>
+                    x:m.attr("cx")
+                    y:m.attr("cy")
+                )
+                .on("drag", => @dragMarker(m, d3.event.x, d3.event.y)) #, guide))
+            )
+
+    dragMarker: (marker, u, v) -> #, guide) ->
+        marker.attr("cx", u)
+        marker.attr("cy", v)
+        #phi = Math.atan2(@yScale.invert(v), @xScale.invert(u))
+        #guide.attr("x2", @xScale $blab.Figure.xMax*cos(phi))
+        #guide.attr("y2", @yScale $blab.Figure.xMax*sin(phi))
+
     draw: (X, Y)->
         lineData = ({ x: x, y:Y[i] } for x,i in X)
         @plot.append("path")
@@ -121,6 +146,18 @@ class Plot extends d3Object
             .x( (d) => @xScale d.x )
             .y( (d) => @yScale d.y )
             .interpolate("linear");
+
+    radialLine: (color) ->
+        @plot.append('line')
+            .attr("x1", @xScale 0)
+            .attr("y1", @yScale 0)
+            .style("stroke", color)
+            .style("stroke-width","1")
+        
+    moveMarker: (marker, u, v) ->
+        marker.attr("cx", u)
+        marker.attr("cy", v)
+
         
 class Histo extends d3Object
 
