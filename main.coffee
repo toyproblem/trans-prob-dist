@@ -43,7 +43,12 @@ class Plot extends d3Object
             .attr("id", "plot")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
-        @draw(@x, @y)
+
+        #x = [-0.5, 0, 0.5]
+        #@p = new Plot x, (g(u) for u in x)
+
+
+        @pwl(@x, @y)
         #@circ([200,100])
         #@circ([100,200])
 
@@ -72,7 +77,15 @@ class Plot extends d3Object
         #guide.attr("x2", @xScale $blab.Figure.xMax*cos(phi))
         #guide.attr("y2", @yScale $blab.Figure.xMax*sin(phi))
 
-    draw: (X, Y)->
+
+    #radialLine: (color) ->
+    #    @plot.append('line')
+    #        .attr("x1", @xScale 0)
+    #        .attr("y1", @yScale 0)
+    #        .style("stroke", color)
+    #        .style("stroke-width","1")
+
+    pwl: (X, Y)-> # piece-wise linear
         lineData = ({ x: x, y:Y[i] } for x,i in X)
         @plot.append("path")
             .attr("d", @lineFunction(lineData))
@@ -123,7 +136,6 @@ class Plot extends d3Object
             .attr('y1', height)
             .style('stroke-opacity', 1e-6)
             .remove()
-
         
     initAxes: ->
         @xScale = d3.scale.linear() # sim units -> screen units
@@ -317,15 +329,20 @@ class Sun
 class Simulation
 
     constructor: ->
-        g = (u) -> ((u<0)*1.5 + (u>0)/2)*u + 0.275
+
+        xm = 0;
+        ym = 0.275;
+
+        g = (x) ->
+            (x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
+        
         q = (y) -> Math.floor((y+0.875)/2*20) 
+
+        x = [-0.5, 0, 0.5]
+        @p = new Plot x, (g(u) for u in x)
+
         @sun = new Sun g, q
         @h = new Histo
-        x = [-0.5, 0, 0.5]
-        #y = [0.5, -0.25, 0.5, 0.25, -0.5, 0.5]
-        #console.log "y", [g(u) for u in x]
-        @p = new Plot x, (g(u) for u in x)
-        #setTimeout @p.circ([100, 100]),
         
     start: () ->
         setTimeout (=> @animate 20000), 200
