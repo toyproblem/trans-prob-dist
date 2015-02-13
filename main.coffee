@@ -20,7 +20,7 @@ class Plot extends d3Object
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
-    constructor: (@x, @y) ->
+    constructor: (xm, ym) ->
 
         super "plot"
         chartArea = @obj
@@ -43,16 +43,32 @@ class Plot extends d3Object
             .attr("id", "plot")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
-
-        #x = [-0.5, 0, 0.5]
-        #@p = new Plot x, (g(u) for u in x)
-
-
-        @pwl(@x, @y)
-        #@circ([200,100])
-        #@circ([100,200])
+        Xm = @xScale(xm)
+        Ym = @yScale(ym)
 
         @marker0 = @marker('black')
+        @marker0.attr("cx", Xm)
+        @marker0.attr("cy", Ym)
+
+        @l1 = @roofLine(-0.5, -0.5)
+        @l1.attr("x2", Xm)
+        @l1.attr("y2", Ym)
+
+        @l2 = @roofLine(0.5, 0.5)
+        @l2.attr("x2", Xm)
+        @l2.attr("y2", Ym)
+
+    roofFn: (x) ->
+        xm = @xScale.invert(@marker0.attr('cx'))
+        ym = @yScale.invert(@marker0.attr('cy'))
+        (x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
+
+    roofLine: (xFixed, yFixed) ->
+        @plot.append("line")
+            .attr("x1", @xScale xFixed)
+            .attr("y1", @yScale yFixed)
+            .style("stroke", 'black')
+            .style("stroke-width","1")
 
     marker: (color) ->
         m = @plot.append("circle")
@@ -73,17 +89,8 @@ class Plot extends d3Object
     dragMarker: (marker, u, v) -> #, guide) ->
         marker.attr("cx", u)
         marker.attr("cy", v)
-        #phi = Math.atan2(@yScale.invert(v), @xScale.invert(u))
-        #guide.attr("x2", @xScale $blab.Figure.xMax*cos(phi))
-        #guide.attr("y2", @yScale $blab.Figure.xMax*sin(phi))
-
-
-    #radialLine: (color) ->
-    #    @plot.append('line')
-    #        .attr("x1", @xScale 0)
-    #        .attr("y1", @yScale 0)
-    #        .style("stroke", color)
-    #        .style("stroke-width","1")
+        @l1.attr('x2', u).attr('y2', v)
+        @l2.attr('x2', u).attr('y2', v)
 
     pwl: (X, Y)-> # piece-wise linear
         lineData = ({ x: x, y:Y[i] } for x,i in X)
@@ -256,8 +263,14 @@ class Sunlight
     h: Canvas.height
     O: -> new Vector 0, 0
 
-    constructor: (@pos=@O(), g, q) ->
+    constructor: (@pos=@O(), @xm, @ym) ->
 
+        #@q = (y) -> Math.floor((y+0.5)*20) 
+
+        g = (x) ->
+            (x<0)*(-0.5+(x+0.5)*(2*@ym+1)/(2*@xm+1)) + (x>=0)*(@ym+(x-@xm)*(1-2*@ym)/(1-2*@xm))
+
+        
         # sim units -> screen units
         @xScale = d3.scale.linear()
             .domain([-1, 1])
@@ -271,7 +284,7 @@ class Sunlight
         @velocity = []
         @velocity[0] = new Vector 0, 2
         @velocity[1] = @O()
-        @setCollision(g, q)
+        @setCollision(g)
         @setState 0
 
         #@colPos = []
@@ -297,9 +310,11 @@ class Sunlight
         @d += @vel.mag()
         @pos.add @vel
 
-    setCollision: (g, quant) ->
-        @limit =  @yScale(g(@xScale.invert(@pos.x)))
-        @bin = quant(@yScale.invert(@limit))
+    setCollision: (g) ->
+        y = g(@xScale.invert(@pos.x))
+        @limit =  @yScale(y)
+        @bin = Math.floor((y+0.5)*20)  
+
  
     collision: -> @pos.y > @limit
 
@@ -311,7 +326,7 @@ class Sun
     rate: 2
     cx: Canvas.width/2
     
-    constructor: (@g, @q)->
+    constructor: (@xm, @ym)->
         @photons = []
 
     emit: () ->
@@ -324,42 +339,37 @@ class Sun
 
     emitPhoton: ->
         pos = new Vector @cx + @l*(Math.random()-0.5), 1
-        new Sunlight(pos, @g, @q)
+        new Sunlight(pos, @xm, @ym)
 
 class Simulation
 
     constructor: ->
 
-        xm = 0;
-        ym = 0.275;
+        xm = 0
+        ym = 0.275
 
-        g = (x) ->
-            (x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
+        #g = (x) ->
+        #    (x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
         
-        q = (y) -> Math.floor((y+0.875)/2*20) 
+        #x = [-0.5, 0, 0.5]
+        #@p = new Plot x, (g(u) for u in x)
+        @p = new Plot(xm, ym)
 
-        x = [-0.5, 0, 0.5]
-        @p = new Plot x, (g(u) for u in x)
-
-        @sun = new Sun g, q
-        @h = new Histo
+        #@sun = new Sun xm, ym
+        #@h = new Histo
         
     start: () ->
         setTimeout (=> @animate 20000), 200
         
     snapshot: () ->
         Canvas.clear()
-        @sun.emit()
-        @h.update(count)
-        #console.log("???", [c.x, c.y]) for c in colPos
-        #colPos = []
-        #console.log "???", colPos[0]
+        #@sun.emit()
+        #@h.update(count)
+
         @p.hline([colPos[0].x,colPos[0].y])
         @p.vline([colPos[0].x,colPos[0].y])
-        #@p.circ([c.x,c.y]) for c in colPos
-        #colPos = []
-        colPos.pop() for c in colPos
 
+        colPos.pop() for c in colPos
 
     animate: () ->
         @timer = setInterval (=> @snapshot()), 50
