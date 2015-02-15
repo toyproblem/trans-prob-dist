@@ -2,6 +2,67 @@
 
 pi = Math.PI
 
+class Canvas
+
+    @width = 360
+    @height = 360
+    
+    @canvas = document.querySelector('canvas')
+    @canvas.width = @width
+    @canvas.height = @height
+    @ctx = @canvas.getContext('2d')
+    
+    @clear: -> @ctx.clearRect(0, 0, @width, @height)
+    
+    @square: (pos, size, color) ->
+        @ctx.fillStyle = color
+        @ctx.fillRect(pos.x, pos.y, size, size)
+
+
+class Trans
+
+    @w = Canvas.width
+    @h = Canvas.height
+    @ax = [-1, 1, -1, 1]
+    
+    @x2X = d3.scale.linear() # to pixels 
+        .domain(@ax[0..1])
+        .range([0, @w])
+
+    @X2x = @x2X.invert
+
+    @y2Y = d3.scale.linear()
+        .domain(@ax[2..3])
+        .range([@h, 0])
+
+    @Y2y = @y2Y.invert
+    
+    @fn: (x, xm, ym) ->
+        n = -0.5+(x+0.5)*(2*ym+1)/(2*xm+1)
+        p = ym+(x-xm)*(1-2*ym)/(1-2*xm)
+        n*(x<xm) + p*(x>=xm)
+    
+class Vector
+
+    z = -> new Vector
+
+    constructor: (@x=0, @y=0) ->
+        
+    add: (v=z()) ->
+        @x += v.x
+        @y += v.y
+        this
+    
+    mag: () -> Math.sqrt(@x*@x + @y*@y)
+        
+    ang: () -> Math.atan2(@y, @x)
+        
+    polar: (m, a) ->
+        @x = m*Math.cos(a)
+        @y = m*Math.sin(a)
+        this
+
+
 class d3Object
 
     constructor: (id) ->
@@ -20,7 +81,7 @@ class Plot extends d3Object
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
-    constructor: (xm, ym) ->
+    constructor: (@xm=0, @ym=0) ->
 
         super "plot"
         chartArea = @obj
@@ -43,8 +104,8 @@ class Plot extends d3Object
             .attr("id", "plot")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
-        Xm = @xScale(xm)
-        Ym = @yScale(ym)
+        Xm = Trans.x2X(@xm)
+        Ym = Trans.y2Y(@ym)
 
         @marker0 = @marker('black')
         @marker0.attr("cx", Xm)
@@ -59,9 +120,10 @@ class Plot extends d3Object
         @l2.attr("y2", Ym)
 
     roofFn: (x) ->
-        xm = @xScale.invert(@marker0.attr('cx'))
-        ym = @yScale.invert(@marker0.attr('cy'))
-        (x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
+        xm = Trans.X2x(@marker0.attr('cx'))
+        ym = Trans.Y2y(@marker0.attr('cy'))
+        #(x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
+        Trans.fn(x, xm, ym)
 
     roofLine: (xFixed, yFixed) ->
         @plot.append("line")
@@ -86,7 +148,9 @@ class Plot extends d3Object
                 .on("drag", => @dragMarker(m, d3.event.x, d3.event.y)) #, guide))
             )
 
-    dragMarker: (marker, u, v) -> #, guide) ->
+    dragMarker: (marker, u, v) ->
+        @xm = Trans.X2x u
+        @ym = Trans.Y2y v
         marker.attr("cx", u)
         marker.attr("cy", v)
         @l1.attr('x2', u).attr('y2', v)
@@ -218,42 +282,6 @@ class Histo extends d3Object
             .attr(@bar.rangeDir, (d,i) => (1-d.count/cmax)*width)
             .attr(@bar.rangeAttr, (d, i) => d.count/cmax*width)
 
-class Canvas
-
-    @width = 360
-    @height = 360
-    
-    @canvas = document.querySelector('canvas')
-    @canvas.width = @width
-    @canvas.height = @height
-    @ctx = @canvas.getContext('2d')
-    
-    @clear: -> @ctx.clearRect(0, 0, @width, @height)
-    
-    @square: (pos, size, color) ->
-        @ctx.fillStyle = color
-        @ctx.fillRect(pos.x, pos.y, size, size)
-    
-class Vector
-
-    z = -> new Vector
-
-    constructor: (@x=0, @y=0) ->
-        
-    add: (v=z()) ->
-        @x += v.x
-        @y += v.y
-        this
-    
-    mag: () -> Math.sqrt(@x*@x + @y*@y)
-        
-    ang: () -> Math.atan2(@y, @x)
-        
-    polar: (m, a) ->
-        @x = m*Math.cos(a)
-        @y = m*Math.sin(a)
-        this
-
 
 class Sunlight
     
@@ -263,14 +291,8 @@ class Sunlight
     h: Canvas.height
     O: -> new Vector 0, 0
 
-    constructor: (@pos=@O(), @xm, @ym) ->
+    constructor: (@pos=@O()) ->
 
-        #@q = (y) -> Math.floor((y+0.5)*20) 
-
-        g = (x) ->
-            (x<0)*(-0.5+(x+0.5)*(2*@ym+1)/(2*@xm+1)) + (x>=0)*(@ym+(x-@xm)*(1-2*@ym)/(1-2*@xm))
-
-        
         # sim units -> screen units
         @xScale = d3.scale.linear()
             .domain([-1, 1])
@@ -284,7 +306,7 @@ class Sunlight
         @velocity = []
         @velocity[0] = new Vector 0, 2
         @velocity[1] = @O()
-        @setCollision(g)
+        @setCollision()
         @setState 0
 
         #@colPos = []
@@ -306,15 +328,14 @@ class Sunlight
             @setState(1)
             count[@bin] += 1
             colPos.push(@pos)
-            #console.log "colPos", colPos
+
         @d += @vel.mag()
         @pos.add @vel
 
-    setCollision: (g) ->
-        y = g(@xScale.invert(@pos.x))
+    setCollision: () ->
+        y = Trans.fn(@xScale.invert(@pos.x), plot.xm, plot.ym)
         @limit =  @yScale(y)
         @bin = Math.floor((y+0.5)*20)  
-
  
     collision: -> @pos.y > @limit
 
@@ -326,7 +347,7 @@ class Sun
     rate: 2
     cx: Canvas.width/2
     
-    constructor: (@xm, @ym)->
+    constructor: () ->
         @photons = []
 
     emit: () ->
@@ -334,12 +355,13 @@ class Sun
             @photons.push(@emitPhoton()) for [0...@rate]
         @photons = @photons.filter (photon) => photon.visible()
         for photon in @photons
+            photon.setCollision()
             photon.move()
             photon.draw()
 
     emitPhoton: ->
         pos = new Vector @cx + @l*(Math.random()-0.5), 1
-        new Sunlight(pos, @xm, @ym)
+        new Sunlight(pos)
 
 class Simulation
 
@@ -348,14 +370,8 @@ class Simulation
         xm = 0
         ym = 0.275
 
-        #g = (x) ->
-        #    (x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
-        
-        #x = [-0.5, 0, 0.5]
-        #@p = new Plot x, (g(u) for u in x)
-        @p = new Plot(xm, ym)
-
-        #@sun = new Sun xm, ym
+        #@p = new Plot(xm, ym)
+        @sun = new Sun
         #@h = new Histo
         
     start: () ->
@@ -363,11 +379,11 @@ class Simulation
         
     snapshot: () ->
         Canvas.clear()
-        #@sun.emit()
+        @sun.emit()
         #@h.update(count)
 
-        @p.hline([colPos[0].x,colPos[0].y])
-        @p.vline([colPos[0].x,colPos[0].y])
+        #@p.hline([colPos[0].x,colPos[0].y])
+        #@p.vline([colPos[0].x,colPos[0].y])
 
         colPos.pop() for c in colPos
 
@@ -381,6 +397,9 @@ class Simulation
 
 count = (0 for [0..19])
 colPos = []
+
+plot = new Plot
+
 sim = new Simulation
 $("#params4b").on "click", =>
     sim.stop()
