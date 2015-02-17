@@ -18,7 +18,6 @@ class Canvas
         @ctx.fillStyle = color
         @ctx.fillRect(pos.x, pos.y, size, size)
 
-
 class Trans
 
     @w = Canvas.width
@@ -62,7 +61,6 @@ class Vector
         @y = m*Math.sin(a)
         this
 
-
 class d3Object
 
     constructor: (id) ->
@@ -70,7 +68,7 @@ class d3Object
         @element.selectAll("svg").remove()
         @obj = @element.append "svg"
         @initAxes()
-        
+
     append: (obj) -> @obj.append obj
     
     initAxes: ->
@@ -81,63 +79,55 @@ class Plot extends d3Object
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
-    constructor: (@xm=0, @ym=0) ->
-
+    constructor: (@xm=0, @ym=0.275) ->
         super "plot"
+
         chartArea = @obj
         chartArea.attr("width", width + margin.left + margin.right)
         chartArea.attr("height", height + margin.top + margin.bottom)
-        chartArea.attr("class","chart")
-        chartArea.attr("id", "chartArea")
 
-        @obj.append("g") # x axis
+        chartArea.append("g")
             .attr("class", "axis")
-                .attr("transform", "translate(#{margin.left}, #{margin.top-10})")
+            .attr("transform", "translate(#{margin.left}, #{margin.top})")
             .call(@xAxis) 
 
-        @obj.append("g") # y axis
+        chartArea.append("g")
             .attr("class", "axis")
-            .attr("transform","translate(#{margin.left+width+10}, #{margin.top})")
+            .attr("transform","translate(#{margin.left+width}, #{margin.top})")
             .call(@yAxis) 
 
-        @plot = @obj.append("g") # Plot area
+        @plotArea = chartArea.append("g")
             .attr("id", "plot")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
 
         Xm = Trans.x2X(@xm)
         Ym = Trans.y2Y(@ym)
 
-        @marker0 = @marker('black')
-        @marker0.attr("cx", Xm)
-        @marker0.attr("cy", Ym)
+        @marker()
+            .attr("cx", Xm)
+            .attr("cy", Ym)
 
-        @l1 = @roofLine(-0.5, -0.5)
-        @l1.attr("x2", Xm)
-        @l1.attr("y2", Ym)
+        @line1 = @roofLine(-0.5, -0.5)
+            .attr("x2", Xm)
+            .attr("y2", Ym)
 
-        @l2 = @roofLine(0.5, 0.5)
-        @l2.attr("x2", Xm)
-        @l2.attr("y2", Ym)
-
-    roofFn: (x) ->
-        xm = Trans.X2x(@marker0.attr('cx'))
-        ym = Trans.Y2y(@marker0.attr('cy'))
-        #(x<0)*(-0.5+(x+0.5)*(2*ym+1)/(2*xm+1)) + (x>=0)*(ym+(x-xm)*(1-2*ym)/(1-2*xm))
-        Trans.fn(x, xm, ym)
+        @line2 = @roofLine(0.5, 0.5)
+            .attr("x2", Xm)
+            .attr("y2", Ym)
 
     roofLine: (xFixed, yFixed) ->
-        @plot.append("line")
-            .attr("x1", @xScale xFixed)
-            .attr("y1", @yScale yFixed)
+        @plotArea.append("line")
+            .attr("x1", Trans.x2X xFixed)
+            .attr("y1", Trans.y2Y yFixed)
             .style("stroke", 'black')
             .style("stroke-width","1")
 
-    marker: (color) ->
-        m = @plot.append("circle")
-            .attr("r",10)
-            .style("fill", color)
-            .style("stroke", color)
-            .style("stroke-width","1")
+    marker: () ->
+        m = @plotArea.append('circle')
+            .attr('r',10)
+            .style('fill', 'black')
+            .style('stroke', 'black')
+            .style('stroke-width','1')
             .call(
                 d3.behavior
                 .drag()
@@ -153,33 +143,11 @@ class Plot extends d3Object
         @ym = Trans.Y2y v
         marker.attr("cx", u)
         marker.attr("cy", v)
-        @l1.attr('x2', u).attr('y2', v)
-        @l2.attr('x2', u).attr('y2', v)
-
-    pwl: (X, Y)-> # piece-wise linear
-        lineData = ({ x: x, y:Y[i] } for x,i in X)
-        @plot.append("path")
-            .attr("d", @lineFunction(lineData))
-            .attr("stroke", "blue")
-            .attr("stroke-width", 2)
-            .attr("fill", "none");
-
-    circ: (m)->
-        @plot.insert('circle')
-            .attr('cx', m[0])
-            .attr('cy', m[1])
-            .attr('r', 1e-6)
-            .style('stroke', d3.hsl(i = (i + 1) % 360, 1, .5))
-            .style('stroke-opacity', 1)
-            .transition()
-            .duration(2000)
-            .ease(Math.sqrt)
-            .attr('r', 100)
-            .style('stroke-opacity', 1e-6)
-            .remove()
+        @line1.attr('x2', u).attr('y2', v)
+        @line2.attr('x2', u).attr('y2', v)
 
     hline: (m)->
-        @plot.insert('line')
+        @plotArea.insert('line')
             .attr('x1', m[0])
             .attr('y1', m[1])
             .attr('x2', width)
@@ -194,7 +162,7 @@ class Plot extends d3Object
             .remove()
 
     vline: (m)->
-        @plot.insert('line')
+        @plotArea.insert('line')
             .attr('x1', m[0])
             .attr('y1', m[1])
             .attr('x2', m[0])
@@ -209,39 +177,14 @@ class Plot extends d3Object
             .remove()
         
     initAxes: ->
-        @xScale = d3.scale.linear() # sim units -> screen units
-            .domain([-1, 1])
-            .range([0, width])
-
-        @yScale = d3.scale.linear() # sim units -> screen units
-            .domain([-1, 1])
-            .range([height, 0])
-
         @xAxis = d3.svg.axis()
-            .scale(@xScale)
+            .scale(Trans.x2X)
             .orient("top")
 
         @yAxis = d3.svg.axis()
-            .scale(@yScale)
+            .scale(Trans.y2Y)
             .orient("right")
 
-        @lineFunction = d3.svg.line()
-            .x( (d) => @xScale d.x )
-            .y( (d) => @yScale d.y )
-            .interpolate("linear");
-
-    radialLine: (color) ->
-        @plot.append('line')
-            .attr("x1", @xScale 0)
-            .attr("y1", @yScale 0)
-            .style("stroke", color)
-            .style("stroke-width","1")
-        
-    moveMarker: (marker, u, v) ->
-        marker.attr("cx", u)
-        marker.attr("cy", v)
-
-        
 class Histo extends d3Object
 
     margin = {top: 10, right: 30, bottom: 30, left: 30}
@@ -250,20 +193,18 @@ class Histo extends d3Object
 
     constructor: (@N=20, @lo=0, @hi=360) ->
         super "histo"
+
         chartArea = @obj
         chartArea.attr("width", width + margin.left + margin.right)
         chartArea.attr("height", height + margin.top + margin.bottom)
-        chartArea.attr("class","chart")
-        chartArea.attr("id", "chartArea")
-
-        @del = (@hi-@lo)/@N
-        @data = ({count:1, val:i*@del} for i in  [0...@N])
 
         @plotArea = chartArea.append("g")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
-            .attr("id", "plotArea")
             .attr("width", width)
             .attr("height", height)
+
+        @del = (@hi-@lo)/@N
+        @data = ({count:1, val:i*@del} for i in  [0...@N])
 
         @bar = {domainDir:"y", domainAttr:"height", rangeDir:"x", rangeAttr:"width"}
 
@@ -274,71 +215,39 @@ class Histo extends d3Object
            .attr(@bar.domainDir, (d) -> height-d.val )
            .attr(@bar.domainAttr, @del)
 
-    update: (c) ->
-        @data[i].count = c[i] for i in [0...@N]
-        cmax = d3.max(c)
+    update: () ->
+        cmax = d3.max(@data[i].count for i in [0...@N])
         @plotArea.selectAll("rect")
             .data(@data)
             .attr(@bar.rangeDir, (d,i) => (1-d.count/cmax)*width)
             .attr(@bar.rangeAttr, (d, i) => d.count/cmax*width)
 
-
 class Sunlight
     
-    colors: ["#ff0", "#000"]
-    sizes: [2, 6]
     w: Canvas.width
     h: Canvas.height
-    O: -> new Vector 0, 0
 
-    constructor: (@pos=@O()) ->
-
-        # sim units -> screen units
-        @xScale = d3.scale.linear()
-            .domain([-1, 1])
-            .range([0, @w])
-        @yScale = d3.scale.linear()
-            .domain([-1, 1])
-            .range([@h, 0])
-
-        # dynamics
-        @d = 0
-        @velocity = []
-        @velocity[0] = new Vector 0, 2
-        @velocity[1] = @O()
+    constructor: (@pos) ->
         @setCollision()
-        @setState 0
-
-        #@colPos = []
-        
-    setState: (@state) ->
-        return if @state<0
-        @vel = @velocity[@state]
-        @color = @colors[@state]
-        @size = @sizes[@state]
-
-    visible: ->
-        (0 < @pos.x < @w) and (0 < @pos.y < @h) and @vel.mag() > 0
         
     draw: ->
-        Canvas.square @pos, @size, @color
+        Canvas.square @pos, 2, '#000'
 
     move: ->
-        if @collision() and @state is 0
-            @setState(1)
-            count[@bin] += 1
-            colPos.push(@pos)
-
-        @d += @vel.mag()
-        @pos.add @vel
-
+        @pos.add {x:0, y:2}
+        if @collision() 
+            histo.data[@bin].count += 1
+            histo.update()
+            plot.hline([@pos.x,@pos.y])
+            plot.vline([@pos.x,@pos.y])
+            
     setCollision: () ->
-        y = Trans.fn(@xScale.invert(@pos.x), plot.xm, plot.ym)
-        @limit =  @yScale(y)
+        x = Trans.X2x @pos.x
+        y = Trans.fn x, plot.xm, plot.ym
+        @limit =  Trans.y2Y y
         @bin = Math.floor((y+0.5)*20)  
  
     collision: -> @pos.y > @limit
-
 
 class Sun
 
@@ -346,18 +255,20 @@ class Sun
     maxPhotons: 4000
     rate: 2
     cx: Canvas.width/2
-    
+
     constructor: () ->
         @photons = []
 
     emit: () ->
         unless @photons.length > @maxPhotons
             @photons.push(@emitPhoton()) for [0...@rate]
-        @photons = @photons.filter (photon) => photon.visible()
+
         for photon in @photons
             photon.setCollision()
             photon.move()
             photon.draw()
+
+        @photons = @photons.filter (photon) => not photon.collision() 
 
     emitPhoton: ->
         pos = new Vector @cx + @l*(Math.random()-0.5), 1
@@ -366,11 +277,6 @@ class Sun
 class Simulation
 
     constructor: ->
-
-        xm = 0
-        ym = 0.275
-
-        #@p = new Plot(xm, ym)
         @sun = new Sun
         #@h = new Histo
         
@@ -380,12 +286,6 @@ class Simulation
     snapshot: () ->
         Canvas.clear()
         @sun.emit()
-        #@h.update(count)
-
-        #@p.hline([colPos[0].x,colPos[0].y])
-        #@p.vline([colPos[0].x,colPos[0].y])
-
-        colPos.pop() for c in colPos
 
     animate: () ->
         @timer = setInterval (=> @snapshot()), 50
@@ -394,14 +294,10 @@ class Simulation
         clearInterval @timer
         @timer = null
 
-
-count = (0 for [0..19])
-colPos = []
-
 plot = new Plot
+histo = new Histo
 
 sim = new Simulation
 $("#params4b").on "click", =>
     sim.stop()
 setTimeout (-> sim.start()), 2000
-
