@@ -93,7 +93,7 @@ class Plot extends d3Object
 
         chartArea.append("g")
             .attr("class", "axis")
-            .attr("transform","translate(#{margin.left+width}, #{margin.top})")
+            .attr("transform","translate(#{margin.left}, #{margin.top})")
             .call(@yAxis) 
 
         @plotArea = chartArea.append("g")
@@ -150,9 +150,9 @@ class Plot extends d3Object
         @plotArea.insert('line')
             .attr('x1', m[0])
             .attr('y1', m[1])
-            .attr('x2', width)
+            .attr('x2', width-40)
             .attr('y2', m[1])
-            .style('stroke', d3.hsl(i = (i + 1) % 360, 1, .5))
+            .style('stroke', d3.hsl(i = (i + 1) % 360, 0, .7))
             .style('stroke-opacity', 1)
             .transition()
             .duration(2000)
@@ -183,15 +183,15 @@ class Plot extends d3Object
 
         @yAxis = d3.svg.axis()
             .scale(Trans.y2Y)
-            .orient("right")
+            .orient("left")
 
 class Histo extends d3Object
 
-    margin = {top: 10, right: 30, bottom: 30, left: 30}
-    width = 240 - margin.left - margin.right
-    height = 240 - margin.top - margin.bottom
+    margin = {top: 0, right: 0, bottom: 0, left: 0}
+    width = 90 - margin.left - margin.right
+    height = 180 - margin.top - margin.bottom
 
-    constructor: (@N=20, @lo=0, @hi=360) ->
+    constructor: (@N=20, @lo=0, @hi=180) ->
         super "histo"
 
         chartArea = @obj
@@ -204,7 +204,7 @@ class Histo extends d3Object
             .attr("height", height)
 
         @del = (@hi-@lo)/@N
-        @data = ({count:1, val:i*@del} for i in  [0...@N])
+        @data = ({count:0} for i in  [0...@N])
 
         @bar = {domainDir:"y", domainAttr:"height", rangeDir:"x", rangeAttr:"width"}
 
@@ -212,14 +212,15 @@ class Histo extends d3Object
            .data(@data)
            .enter()
            .append("rect")
-           .attr(@bar.domainDir, (d) -> height-d.val )
+           .attr(@bar.domainDir, (d,i) => height-@del*(i+1))
            .attr(@bar.domainAttr, @del)
+           #.attr(@bar.domainDir, (d) -> height-d.val)
 
     update: () ->
         cmax = d3.max(@data[i].count for i in [0...@N])
         @plotArea.selectAll("rect")
             .data(@data)
-            .attr(@bar.rangeDir, (d,i) => (1-d.count/cmax)*width)
+            .attr(@bar.rangeDir, (d,i) => (cmax-d.count)*width/cmax*0)
             .attr(@bar.rangeAttr, (d, i) => d.count/cmax*width)
 
 class Sunlight
