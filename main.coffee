@@ -79,7 +79,7 @@ class Plot extends d3Object
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
-    constructor: (@xm=0, @ym=0.275) ->
+    constructor: (@xm=0, @ym=0.4) ->
         super "plot"
 
         chartArea = @obj
@@ -88,12 +88,12 @@ class Plot extends d3Object
 
         chartArea.append("g")
             .attr("class", "axis")
-            .attr("transform", "translate(#{margin.left}, #{margin.top})")
+            .attr("transform", "translate(#{margin.left}, #{margin.top+height-50})")
             .call(@xAxis) 
 
         chartArea.append("g")
             .attr("class", "axis")
-            .attr("transform","translate(#{margin.left}, #{margin.top})")
+            .attr("transform","translate(#{margin.left+50}, #{margin.top})")
             .call(@yAxis) 
 
         @plotArea = chartArea.append("g")
@@ -135,7 +135,7 @@ class Plot extends d3Object
                     x:m.attr("cx")
                     y:m.attr("cy")
                 )
-                .on("drag", => @dragMarker(m, d3.event.x, d3.event.y)) #, guide))
+                .on("drag", => @dragMarker(m, d3.event.x, d3.event.y))
             )
 
     dragMarker: (marker, u, v) ->
@@ -145,6 +145,9 @@ class Plot extends d3Object
         marker.attr("cy", v)
         @line1.attr('x2', u).attr('y2', v)
         @line2.attr('x2', u).attr('y2', v)
+        histo.data = ({count:0} for i in  [0...20])
+        #histo.update()
+        console.log "???", plot.data
 
     hline: (m)->
         @plotArea.insert('line')
@@ -152,7 +155,7 @@ class Plot extends d3Object
             .attr('y1', m[1])
             .attr('x2', width-40)
             .attr('y2', m[1])
-            .style('stroke', d3.hsl(i = (i + 1) % 360, 0, .7))
+            .style('stroke', d3.hsl(0, 0, .8))
             .style('stroke-opacity', 1)
             .transition()
             .duration(2000)
@@ -160,30 +163,19 @@ class Plot extends d3Object
             .attr('x1', width)
             .style('stroke-opacity', 1e-6)
             .remove()
-
-    vline: (m)->
-        @plotArea.insert('line')
-            .attr('x1', m[0])
-            .attr('y1', m[1])
-            .attr('x2', m[0])
-            .attr('y2', height)
-            .style('stroke', d3.hsl(i = (i + 1) % 360, 1, .5))
-            .style('stroke-opacity', 1)
-            .transition()
-            .duration(2000)
-            .ease(Math.sqrt)
-            .attr('y1', height)
-            .style('stroke-opacity', 1e-6)
-            .remove()
         
     initAxes: ->
         @xAxis = d3.svg.axis()
             .scale(Trans.x2X)
-            .orient("top")
+            .orient("bottom")
+            .tickValues([-0.5, 0, 0.5])
+            .outerTickSize([0])
 
         @yAxis = d3.svg.axis()
             .scale(Trans.y2Y)
             .orient("left")
+            .tickValues([-0.5, 0, 0.5])
+            .outerTickSize([0])
 
 class Histo extends d3Object
 
@@ -206,22 +198,21 @@ class Histo extends d3Object
         @del = (@hi-@lo)/@N
         @data = ({count:0} for i in  [0...@N])
 
-        @bar = {domainDir:"y", domainAttr:"height", rangeDir:"x", rangeAttr:"width"}
-
         @plotArea.selectAll("rect")
            .data(@data)
            .enter()
            .append("rect")
-           .attr(@bar.domainDir, (d,i) => height-@del*(i+1))
-           .attr(@bar.domainAttr, @del)
-           #.attr(@bar.domainDir, (d) -> height-d.val)
+           .attr('y', (d,i) => height-@del*(i+1))
+           .attr('height', @del)
 
     update: () ->
         cmax = d3.max(@data[i].count for i in [0...@N])
         @plotArea.selectAll("rect")
             .data(@data)
-            .attr(@bar.rangeDir, (d,i) => (cmax-d.count)*width/cmax*0)
-            .attr(@bar.rangeAttr, (d, i) => d.count/cmax*width)
+            .transition()
+            .duration(400)
+            .ease(Math.sqrt)
+            .attr('width', (d)  => d.count/cmax*width)
 
 class Sunlight
     
@@ -240,7 +231,6 @@ class Sunlight
             histo.data[@bin].count += 1
             histo.update()
             plot.hline([@pos.x,@pos.y])
-            plot.vline([@pos.x,@pos.y])
             
     setCollision: () ->
         x = Trans.X2x @pos.x
@@ -294,6 +284,7 @@ class Simulation
     stop: ->
         clearInterval @timer
         @timer = null
+
 
 plot = new Plot
 histo = new Histo

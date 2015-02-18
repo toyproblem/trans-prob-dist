@@ -38,17 +38,17 @@ circle {
     margin: 0 auto;
     top: 10px;
     z-index: 10;
-    border: 2px solid #c00;
+    /*border: 2px solid #c00;*/
 }
 
 #histo {
     position: absolute;
-    left: 380px;
+    left: 370px;
     top: 150px;
     /*width: 480px;
     height: 480px;*/
     margin: 0 auto;
-    border: 2px solid #999;
+    /*border: 2px solid #999;*/
 }
 
 
@@ -58,7 +58,7 @@ circle {
     height: 480px;*/
     margin: 0 auto;
     top: 0;
-    border: 2px solid #00f;
+    /*border: 2px solid #00f;*/
 }
 
 #canvas {
@@ -68,15 +68,15 @@ circle {
     margin: 0 auto;
     top: 60px;
     left: 60px;
-    border: 2px solid #0f0;
+    /*border: 2px solid #0f0;*/
 }
 
 canvas {
         background-color: white;
         width: 360px;
         height: 360px;
-        border-radius: 10px;
-	border: 2px solid #ccc;
+        /*border-radius: 10px;
+	border: 2px solid #ccc;*/
       }
 
 #text {
