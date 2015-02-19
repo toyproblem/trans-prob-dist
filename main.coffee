@@ -22,17 +22,16 @@ class Trans
 
     @w = Canvas.width
     @h = Canvas.height
-    @ax = [-1, 1, -1, 1]
     
     @x2X = d3.scale.linear() # to pixels 
-        .domain(@ax[0..1])
-        .range([0, @w])
+        .domain([-0.5, 0.5])
+        .range([0.25*@w, 0.75*@w])
 
     @X2x = @x2X.invert
 
     @y2Y = d3.scale.linear()
-        .domain(@ax[2..3])
-        .range([@h, 0])
+        .domain([-0.5, 0.5])
+        .range([0.75*@h, 0.25*@h])
 
     @Y2y = @y2Y.invert
     
