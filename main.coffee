@@ -134,10 +134,17 @@ class Plot extends d3Object
                     x:m.attr("cx")
                     y:m.attr("cy")
                 )
-                .on("drag", => @dragMarker(m, d3.event.x, d3.event.y))
+                .on("drag", => @dragMarker(m, d3.mouse(@plotArea.node())))
+                #.on("drag", => @dragMarker(m, d3.event.x, d3.event.y))
             )
 
-    dragMarker: (marker, u, v) ->
+    dragMarker: (marker, pos) ->
+
+        u = pos[0]
+        v = pos[1]
+        U = Trans.X2x u
+        V = Trans.Y2y v
+        return if  ((Math.abs(U)>0.49) or (Math.abs(V)>0.49))
         @xm = Trans.X2x u
         @ym = Trans.Y2y v
         marker.attr("cx", u)
@@ -145,8 +152,6 @@ class Plot extends d3Object
         @line1.attr('x2', u).attr('y2', v)
         @line2.attr('x2', u).attr('y2', v)
         histo.data = ({count:0} for i in  [0...20])
-        #histo.update()
-        console.log "???", plot.data
 
     hline: (m)->
         @plotArea.insert('line')
@@ -208,10 +213,10 @@ class Histo extends d3Object
         cmax = d3.max(@data[i].count for i in [0...@N])
         @plotArea.selectAll("rect")
             .data(@data)
-            .transition()
-            .duration(400)
-            .ease(Math.sqrt)
-            .attr('width', (d)  => d.count/cmax*width)
+            #.transition()
+            #.duration(400)
+            #.ease('linear')
+            .attr('width', (d) => d.count/cmax*width)
 
 class Sunlight
     
@@ -268,7 +273,6 @@ class Simulation
 
     constructor: ->
         @sun = new Sun
-        #@h = new Histo
         
     start: () ->
         setTimeout (=> @animate 20000), 200
