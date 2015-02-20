@@ -272,14 +272,14 @@ class Sun
 class Simulation
 
     constructor: ->
-        @sun = new Sun
+        #@sun = new Sun
         
     start: () ->
         setTimeout (=> @animate 20000), 200
         
     snapshot: () ->
         Canvas.clear()
-        @sun.emit()
+        sun.emit()
 
     animate: () ->
         @timer = setInterval (=> @snapshot()), 50
@@ -291,7 +291,7 @@ class Simulation
 
 plot = new Plot
 histo = new Histo
-
+sun = new Sun
 sim = new Simulation
 $("#params4b").on "click", =>
     sim.stop()
