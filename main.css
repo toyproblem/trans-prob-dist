@@ -2,18 +2,14 @@ svg {
     overflow: visible;
 }
 
-.bar rect {
+.histo rect {
   fill: steelblue;
   shape-rendering: crispEdges;
 }
 
-.bar text {
-  fill: #fff;
-}
-
 .axis path, .axis line {
   fill: none;
-  stroke: #000;
+  stroke: steelblue;
   shape-rendering: crispEdges;
 }
 
@@ -24,12 +20,6 @@ svg {
     padding-right: 5px;
     border-radius: 10px;
 }
-
-circle {
-  fill: none;
-  stroke-width: 2.5px;
-}
-
 
 #container {
     position: relative;
@@ -45,20 +35,13 @@ circle {
     position: absolute;
     left: 370px;
     top: 150px;
-    /*width: 480px;
-    height: 480px;*/
     margin: 0 auto;
-    /*border: 2px solid #999;*/
 }
-
 
 #plot {
     position: absolute;
-    /*width: 480px;
-    height: 480px;*/
     margin: 0 auto;
     top: 0;
-    /*border: 2px solid #00f;*/
 }
 
 #canvas {
@@ -68,31 +51,13 @@ circle {
     margin: 0 auto;
     top: 60px;
     left: 60px;
-    /*border: 2px solid #0f0;*/
 }
-
-canvas {
-        background-color: white;
-        width: 360px;
-        height: 360px;
-        /*border-radius: 10px;
-	border: 2px solid #ccc;*/
-      }
 
 #text {
     width: 960px;
     margin: 0 auto;
     margin-bottom: 0px;
 }
-
-
-.canvas-text {
-    position: absolute;
-    color:white;
-    text-align:left;
-    font-size:14pt;
-}
-
 
 .left_col {
     float: left;
