@@ -193,6 +193,8 @@ class Histo extends d3Object
         chartArea = @obj
         chartArea.attr("width", width + margin.left + margin.right)
         chartArea.attr("height", height + margin.top + margin.bottom)
+        chartArea.attr('class', 'histo')
+        
 
         @plotArea = chartArea.append("g")
             .attr("transform", "translate(#{margin.left},#{margin.top})")
