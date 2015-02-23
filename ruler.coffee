@@ -1,18 +1,24 @@
 # Measurements from N trials
 fig1 = figure
-    xlabel: "Trial"
-    ylabel: "Measurements"
+    xlabel: "probabilty"
+    ylabel: "inverse erf"
     height: 200
     series:
         color: "green"
         shadowSize: 0
         lines: {lineWidth: 1, show:true}
-        points: {show: true}
+        points: {show: false}
 
-L = 7.8 #; True length of pencil
-N = 50 #; Number of trials
-dither = rand([N]) - 0.5 #; $\in[-0.5,0.5]$
-measurements = round(L + dither) #;
-# Estimate
-estimate = measurements.sum() / N
-plot [1..N], measurements, fig: fig1
+p = linspace 0.0001, 0.9999, 1000
+
+c0 = 1.758
+c1 = -2.257
+c2 = 0.1661
+
+erfinv = (p) ->
+    l = p<=0.5
+    g = p>0.5
+    t = sqrt(-log(p*l+(1-p)*g))
+    (c0 + c1*t + c2*t*t)*(l-g)
+    
+plot p, erfinv(p), fig: fig1
