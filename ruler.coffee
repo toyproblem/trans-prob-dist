@@ -1,12 +1,10 @@
  # Approx. inverse error function (<a href="http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=4630740">pdf</a>):
 
 erfinv = (u) -> #;
-    c0 = 1.758
-    c1 = -2.257
-    c2 = 0.1661
+    c = [1.758, -2.257, 0.1661]
     s = (u<=0)-(u>0) # sign
     t = sqrt( -log(0.5*(1+s*u)) )
-    (c0 + c1*t + c2*t*t)*s
+    (c[0] + c[1]*t + c[2]*t*t)*s
 
 # Inverse error function plot 
 
