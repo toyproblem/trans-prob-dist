@@ -74,7 +74,7 @@ class d3Object
 
 class Plot extends d3Object
 
-    margin = {top: 60, right: 60, bottom: 60, left: 60}
+    margin = {top: 0, right: 60, bottom: 60, left: 60}
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
@@ -87,7 +87,7 @@ class Plot extends d3Object
 
         chartArea.append("g")
             .attr("class", "axis")
-            .attr("transform", "translate(#{margin.left}, #{margin.top+height-50})")
+            .attr("transform", "translate(#{margin.left}, #{margin.top+height-110})")
             .call(@xAxis) 
 
         chartArea.append("g")

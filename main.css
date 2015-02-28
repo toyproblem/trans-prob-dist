@@ -34,7 +34,7 @@ svg {
 #histo {
     position: absolute;
     left: 370px;
-    top: 150px;
+    top: 90px;
     margin: 0 auto;
 }
 
@@ -49,7 +49,7 @@ svg {
     width: 360px;
     height: 360px;
     margin: 0 auto;
-    top: 60px;
+    top: 0px;
     left: 60px;
 }
 
