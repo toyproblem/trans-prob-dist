@@ -1,4 +1,39 @@
- # Approx. inverse error function (<a href="http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=4630740">pdf</a>):
+ # The two plots show a "roof" function, and
+ # the corresponding transformed
+ # distribution. The code, and explanation,
+ # folows below ...
+
+# "roof" function
+fig1 = figure
+    xlabel: "x"
+    ylabel: "y=erfinv(x)"
+    yaxis: {min:-4, max:4}
+    height: 220
+    colors: ["green"]
+    series:
+        shadowSize: 0
+        lines: {lineWidth: 1, show:true}
+        points: {show: false}
+
+
+# histogram
+fig2 = figure
+    xlabel: "y"
+    ylabel: "prob(y)"
+    height: 220
+    colors: ["green", "black"]
+    series:
+        shadowSize: 0
+        lines: {lineWidth: 1, show:true}
+        points: {show: false}
+
+ # The roof function is the inverse error
+ # function (erfinv). That is, the integral
+ # of the Gaussian distribution when we
+ # rotate the screen 90 degrees.
+
+ # Actually, we cannot express errinv simply, so
+ # we use a polynomial approximation (<a href="http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=4630740">pdf</a>):
 
 erfinv = (u) -> #;
     c = [1.758, -2.257, 0.1661]
@@ -6,61 +41,26 @@ erfinv = (u) -> #;
     t = sqrt( -log(0.5*(1+s*u)) )
     (c[0] + c[1]*t + c[2]*t*t)*s
 
-# Inverse error function plot 
+x = linspace -1, 1, 1000 #;
+y = erfinv x #;
+plot x, y, fig: fig1
 
-fig1 = figure
-    xlabel: "u"
-    ylabel: "y=erfinv(u)"
-    yaxis: {min:-4, max:4}
-    height: 320
-    colors: ["green"]
-    series:
-        shadowSize: 0
-        lines: {lineWidth: 1, show:true}
-        points: {show: false}
+ # Now consider applying a uniform
+ # distribution to the erfinv roof
+ # function.
 
-u = linspace -1, 1, 1000 #;
-y = erfinv u #;
-plot u, y, fig: fig1
+X = 2*rand([10000])-1 #;
+Y = erfinv(X) #;
 
- # uniformly distributed input (-1,1)
+ # Applying the output to a histogram,
+ # we can compare the transformed
+ # uniform distribution with and ideal
+ # Gaussian distribution.
 
-U = 2*rand([10000])-1 #;
-
- # transform by erfinv
-
-Y = erfinv(U) #;
-
- # estimate dist with histogram
-
-histo = (U, N, l, r) -> #;
-    # (input, Nbins, min, max) ->
-    d = (r-l)/N # bin width
-    bin = [0...N]*d+l
-    count = bin*0
-    I = (floor((u-l)/d) for u in U)
-    count[i]+=1 for i in I
-    {bin:bin , prob:count/U.length/d}
-
-h = histo(erfinv(U), 200, -4, 4) #;
-
- # ideal distribution
-
+h = $blab.histo(Y, 200, -4, 4) #;
 gauss = (u) -> 1/sqrt(2*pi)*exp(-u*u/2) #;
-
-# approximate Gaussian distrution plot
-
-fig2 = figure
-    xlabel: "y"
-    ylabel: "prob(y)"
-    height: 250
-    colors: ["green", "black"]
-    series:
-        shadowSize: 0
-        lines: {lineWidth: 1, show:true}
-        points: {show: false}
-
 plot h.bin, [h.prob, gauss(h.bin)], fig:fig2
     
-                                                                    
+ # NB: the histo function is imported
+ # from lib.coffee.                                                                    
 
