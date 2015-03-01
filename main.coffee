@@ -24,20 +24,20 @@ class Trans
     @h = Canvas.height
     
     @x2X = d3.scale.linear() # to pixels 
-        .domain([-0.5, 0.5])
+        .domain([-1, 1])
         .range([0.25*@w, 0.75*@w])
 
     @X2x = @x2X.invert
 
     @y2Y = d3.scale.linear()
-        .domain([-0.5, 0.5])
+        .domain([-1, 1])
         .range([0.75*@h, 0.25*@h])
 
     @Y2y = @y2Y.invert
     
     @fn: (x, xm, ym) ->
-        n = -0.5+(x+0.5)*(2*ym+1)/(2*xm+1)
-        p = ym+(x-xm)*(1-2*ym)/(1-2*xm)
+        n = -1+(x+1)*(ym+1)/(xm+1)
+        p = ym+(x-xm)*(1-ym)/(1-xm)
         n*(x<xm) + p*(x>=xm)
     
 class Vector
@@ -78,7 +78,7 @@ class Plot extends d3Object
     width = 480 - margin.left - margin.right
     height = 480 - margin.top - margin.bottom
     
-    constructor: (@xm=0, @ym=0.4) ->
+    constructor: (@xm=0, @ym=0.8) ->
         super "plot"
 
         chartArea = @obj
@@ -88,7 +88,7 @@ class Plot extends d3Object
         chartArea.append("g")
             .attr("class", "axis")
             .attr("transform", "translate(#{margin.left}, #{margin.top+height-110})")
-            .call(@xAxis) 
+                .call(@xAxis) 
 
         chartArea.append("g")
             .attr("class", "axis")
@@ -106,11 +106,11 @@ class Plot extends d3Object
             .attr("cx", Xm)
             .attr("cy", Ym)
 
-        @line1 = @roofLine(-0.5, -0.5)
+        @line1 = @roofLine(-1, -1)
             .attr("x2", Xm)
             .attr("y2", Ym)
 
-        @line2 = @roofLine(0.5, 0.5)
+        @line2 = @roofLine(1, 1)
             .attr("x2", Xm)
             .attr("y2", Ym)
 
@@ -172,13 +172,13 @@ class Plot extends d3Object
         @xAxis = d3.svg.axis()
             .scale(Trans.x2X)
             .orient("bottom")
-            .tickValues([-0.5, 0, 0.5])
+            .tickValues([-1, 0, 1])
             .outerTickSize([0])
 
         @yAxis = d3.svg.axis()
             .scale(Trans.y2Y)
             .orient("left")
-            .tickValues([-0.5, 0, 0.5])
+            .tickValues([-1, 0, 1])
             .outerTickSize([0])
 
 class Histo extends d3Object
@@ -242,7 +242,7 @@ class Sunlight
         x = Trans.X2x @pos.x
         y = Trans.fn x, plot.xm, plot.ym
         @limit =  Trans.y2Y y
-        @bin = Math.floor((y+0.5)*20)  
+        @bin = Math.floor((y+1)*20/2)  
  
     collision: -> @pos.y > @limit
 
